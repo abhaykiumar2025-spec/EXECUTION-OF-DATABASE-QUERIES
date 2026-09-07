@@ -1207,7 +1207,7 @@
   }
 
   // Legacy account modal login handler.
-  function createLocalDemoUser(email) {
+  function createLocalDemoUser(email, overrides = {}) {
     const isDoctor = email.toLowerCase().includes('doc');
     return {
       id: 'usr-local-' + Date.now(),
@@ -1216,7 +1216,8 @@
       role: isDoctor ? 'doctor' : 'caregiver',
       patientName: 'Eleanor Hughes',
       phone: '+1 (555) 234-8901',
-      isEmailVerified: true
+      isEmailVerified: true,
+      ...overrides
     };
   }
 
@@ -1269,6 +1270,9 @@
 
   async function submitGateAuth(endpoint, payload, error) {
     error.textContent = '';
+    const overrides = {};
+    if (payload.name) overrides.name = payload.name;
+    if (payload.role) overrides.role = payload.role;
     try {
       const response = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
@@ -1277,13 +1281,16 @@
       if (data.success) {
         finalizeLogin(data.user);
       } else if (response.status === 503) {
-        finalizeLogin(createLocalDemoUser(payload.email));
+        finalizeLogin(createLocalDemoUser(payload.email, overrides));
         showToast('MongoDB is offline; using local demo mode.', 'warning');
       } else {
-        throw new Error(data.message || 'Authentication failed.');
+        error.textContent = data.message || 'Authentication failed.';
       }
     } catch (requestError) {
-      error.textContent = requestError.message;
+      // No backend deployed here (or it returned a non-JSON response) — the
+      // dashboard is designed to stay usable locally in that case.
+      finalizeLogin(createLocalDemoUser(payload.email, overrides));
+      showToast('Server unavailable; using local demo mode.', 'warning');
     }
   }
 
@@ -1380,11 +1387,19 @@
       if (data.success) {
         formRegister.reset();
         finalizeLogin(data.user, data.token);
+      } else if (res.status === 503) {
+        formRegister.reset();
+        finalizeLogin(createLocalDemoUser(email, { name, role }));
+        showToast('MongoDB is offline; using local demo mode.', 'warning');
       } else {
         if (errEl) { errEl.textContent = data.message || 'Registration failed.'; errEl.style.display = 'block'; }
       }
     } catch (err) {
-      if (errEl) { errEl.textContent = 'Network error. Please try again.'; errEl.style.display = 'block'; }
+      // No backend deployed here (or it returned a non-JSON response) — fall
+      // back to local demo mode so the dashboard stays reachable.
+      formRegister.reset();
+      finalizeLogin(createLocalDemoUser(email, { name, role }));
+      showToast('Server unavailable; using local demo mode.', 'warning');
     }
   });
 
