@@ -1,0 +1,35 @@
+{
+  "name": "smart-pill-dispenser-backend",
+  "version": "2.5.0",
+  "description": "IoT Smart Pill Dispenser for Elderly Care - Express & MongoDB Atlas Backend with JWT Auth",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "seed": "node utils/seeder.js"
+  },
+  "keywords": [
+    "iot",
+    "smart-pill-dispenser",
+    "elderly-care",
+    "mongodb-atlas",
+    "express",
+    "jwt",
+    "bcryptjs",
+    "mongoose"
+  ],
+  "author": "PillGuard IoT Team",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.9.5",
+    "morgan": "^1.10.0"
+  }
+}

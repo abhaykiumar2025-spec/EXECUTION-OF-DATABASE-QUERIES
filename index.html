@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Pill Dispenser & IoT Caregiver System for Elderly Care</title>
+  <meta name="description"
+    content="IoT-based automated smart pill dispenser and caregiver monitoring platform for elderly medication adherence and safety.">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- First-run authentication and patient setup flow -->
+  <div class="auth-gate" id="authGate">
+    <div class="auth-gate-card">
+      <div class="auth-gate-brand">
+        <div class="brand-icon-wrapper">💊</div>
+        <div>
+          <h1>PillGuard IoT</h1>
+          <p>Safe medication, connected care</p>
+        </div>
+      </div>
+      <div id="gateLoginPanel">
+        <h2>Welcome back</h2>
+        <p class="auth-gate-subtitle">Sign in to manage your medication dashboard.</p>
+        <form id="gateLoginForm">
+          <div class="form-group">
+            <label for="gateLoginEmail">Email address</label>
+            <input class="form-input" type="email" id="gateLoginEmail" autocomplete="email" required>
+          </div>
+          <div class="form-group">
+            <label for="gateLoginPassword">Password</label>
+            <input class="form-input" type="password" id="gateLoginPassword" autocomplete="current-password" required>
+          </div>
+          <div class="auth-gate-error" id="gateLoginError"></div>
+          <button class="action-btn primary auth-gate-submit" type="submit">Sign in</button>
+        </form>
+        <button class="auth-gate-link" id="gateShowSignup" type="button">New user? Create an account</button>
+      </div>
+      <div id="gateSignupPanel" style="display:none;">
+        <h2>Create your account</h2>
+        <p class="auth-gate-subtitle">Create an account to manage prescriptions and reminders.</p>
+        <form id="gateSignupForm">
+          <div class="form-group"><label for="gateSignupName">Full name</label><input class="form-input"
+              id="gateSignupName" autocomplete="name" required></div>
+          <div class="form-group"><label for="gateSignupEmail">Email address</label><input class="form-input"
+              type="email" id="gateSignupEmail" autocomplete="email" required></div>
+          <div class="form-group"><label for="gateSignupPassword">Password</label><input class="form-input"
+              type="password" id="gateSignupPassword" minlength="8" required></div>
+          <div class="auth-gate-error" id="gateSignupError"></div>
+          <button class="action-btn primary auth-gate-submit" type="submit">Create account</button>
+        </form>
+        <button class="auth-gate-link" id="gateShowLogin" type="button">Already have an account? Sign in</button>
+      </div>
+      <div id="gateProfilePanel" style="display:none;">
+        <h2>Set up patient profile</h2>
+        <p class="auth-gate-subtitle">Add patient details so reminders and refill alerts are personalized.</p>
+        <form id="gateProfileForm">
+          <div class="profile-form-grid">
+            <div class="form-group"><label for="gatePatientName">Patient name</label><input class="form-input"
+                id="gatePatientName" required></div>
+            <div class="form-group"><label for="gatePatientAge">Age</label><input class="form-input" id="gatePatientAge"
+                type="number" min="1" max="120" required></div>
+            <div class="form-group"><label for="gatePatientWeight">Weight (kg)</label><input class="form-input"
+                id="gatePatientWeight" type="number" min="1" max="500" step="0.1" required></div>
+            <div class="form-group"><label for="gatePatientPhone">Phone number</label><input class="form-input"
+                id="gatePatientPhone" type="tel" pattern="[-+0-9 ()]{7,}" required></div>
+            <div class="form-group profile-form-wide"><label for="gatePatientNotes">Notes / allergies</label><textarea
+                class="form-input" id="gatePatientNotes" rows="3" placeholder="Optional care notes"></textarea></div>
+          </div>
+          <div class="auth-gate-error" id="gateProfileError"></div>
+          <button class="action-btn primary auth-gate-submit" type="submit">Save profile and open dashboard</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <!-- Left Navigation Sidebar -->
+    <aside class="sidebar" id="appSidebar">
+      <div class="brand-header">
+        <div class="brand-icon-wrapper">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
+            <path d="m8.5 8.5 7 7" />
+          </svg>
+        </div>
+        <div class="brand-info">
+          <h1>PillGuard IoT</h1>
+          <span>Elderly Care v2.5</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <div class="nav-section-title">Monitoring & Care</div>
+        <button class="nav-item active" data-view="dashboardView" id="navDashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <rect width="7" height="9" x="3" y="3" rx="1" />
+            <rect width="7" height="5" x="14" y="3" rx="1" />
+            <rect width="7" height="9" x="14" y="12" rx="1" />
+            <rect width="7" height="5" x="3" y="16" rx="1" />
+          </svg>
+          Caregiver Dashboard
+        </button>
+
+        <button class="nav-item" data-view="hardwareView" id="navHardware">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <rect width="16" height="16" x="4" y="4" rx="2" />
+            <rect width="6" height="6" x="9" y="9" rx="1" />
+            <path d="M15 2v2" />
+            <path d="M15 20v2" />
+            <path d="M2 15h2" />
+            <path d="M2 9h2" />
+            <path d="M20 15h2" />
+            <path d="M20 9h2" />
+            <path d="M9 2v2" />
+            <path d="M9 20v2" />
+          </svg>
+          IoT Hardware Twin
+          <span class="nav-badge live">LIVE</span>
+        </button>
+
+        <button class="nav-item" data-view="aiScannerView" id="navAiScanner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+            <circle cx="12" cy="13" r="3" />
+          </svg>
+          AI Pill Detector
+        </button>
+
+        <button class="nav-item" data-view="kioskView" id="navKiosk">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" />
+            <circle cx="12" cy="10" r="3" />
+            <path d="M7 21v-2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2" />
+          </svg>
+          Senior Kiosk Mode
+        </button>
+
+        <div class="nav-section-title">Management</div>
+        <button class="nav-item" data-view="analyticsView" id="navAnalytics">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M3 3v18h18" />
+            <path d="m19 9-5 5-4-4-3 3" />
+          </svg>
+          Adherence Analytics
+        </button>
+
+        <button class="nav-item" data-view="inventoryView" id="navInventory">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path
+              d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+            <path d="m3.3 7 8.7 5 8.7-5" />
+            <path d="M12 22V12" />
+          </svg>
+          Pill Inventory
+          <span class="nav-badge" id="sidebarLowStockBadge" style="display:none;">LOW</span>
+        </button>
+
+        <button class="nav-item" data-view="docsView" id="navDocs">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+            <path d="M6 6h10" />
+            <path d="M6 10h10" />
+            <path d="M6 14h6" />
+          </svg>
+          Project & IoT Specs
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="device-status-widget">
+          <div class="status-dot-pulse" id="iotConnDot"></div>
+          <div class="device-status-info">
+            <h4 id="iotDeviceName">ESP32-Dispenser #01</h4>
+            <p id="iotConnStatus">WiFi Connected &bull; 98% Batt</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Viewport Area -->
+    <main class="main-wrapper">
+      <!-- Top Application Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <div class="patient-badge">
+            <div class="patient-avatar" id="patientHeaderAvatar">EH</div>
+            <div class="patient-meta">
+              <h3 id="patientHeaderName">Eleanor Hughes (Age 78)</h3>
+              <p id="patientHeaderSub">Primary Caregiver: Sarah Hughes</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Auth User Status Dropdown / Button -->
+          <div class="user-auth-pill" id="userAuthPill">
+            <div class="user-auth-avatar" id="authUserAvatar">SH</div>
+            <div class="user-auth-info">
+              <span class="user-auth-name" id="authUserName">Sarah Hughes</span>
+              <span class="user-auth-role" id="authUserRole">Caregiver &bull; Secure Session</span>
+            </div>
+            <button class="action-btn outline btn-auth-toggle" id="btnOpenAuthModal" title="Account / Switch User"
+              style="font-size:11px; padding:4px 10px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              Account
+            </button>
+            <button class="action-btn" id="btnLogoutHeader" title="Logout"
+              style="font-size:11px; padding:4px 10px; background:#fef2f2; color:#dc2626; border:1px solid #fca5a5; display:none;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Logout
+            </button>
+          </div>
+
+          <div class="clock-display" id="liveClockDisplay">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span id="currentRealTime">12:00:00 PM</span>
+          </div>
+
+          <button class="action-btn outline" id="btnVoiceDemo" title="Test Web Speech Voice Guidance">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+            </svg>
+            Voice Prompt
+          </button>
+
+          <button class="action-btn primary" id="btnOpenAddPrescription">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14" />
+              <path d="M5 12h14" />
+            </svg>
+            Add Prescription
+          </button>
+
+          <button class="action-btn sos-btn" id="btnTriggerSos">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            SOS ALERT
+          </button>
+        </div>
+      </header>
+
+      <!-- Dynamic Content Sections -->
+      <div class="content-area">
+
+        <!-- ================================================================= -->
+        <!-- VIEW 1: CAREGIVER DASHBOARD -->
+        <!-- ================================================================= -->
+        <section class="view-section active" id="dashboardView">
+          <div class="section-header">
+            <div>
+              <h2>Caregiver Monitoring Overview</h2>
+              <p>Real-time medication adherence, upcoming schedules, and dispenser telemetry.</p>
+            </div>
+            <div>
+              <button class="action-btn outline" id="btnManualDispenseTop">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m12 14 4-4" />
+                  <path d="M3.34 17a10 10 0 1 1 17.32 0" />
+                </svg>
+                Dispense Current Dose Now
+              </button>
+            </div>
+          </div>
+
+          <!-- Top Quick Metric Stats -->
+          <div class="stats-grid">
+            <div class="stat-card emerald">
+              <div class="stat-icon emerald">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Adherence Rate</div>
+                <div class="stat-value" id="statAdherenceRate">94.2%</div>
+                <div class="stat-sub"><span class="trend-up">&uarr; +4.2%</span> past 7 days</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Today's Schedule</div>
+                <div class="stat-value" id="statTodayCount">4 Doses</div>
+                <div class="stat-sub" id="statTakenCountSub">2 Taken &bull; 2 Pending</div>
+              </div>
+            </div>
+
+            <div class="stat-card amber">
+              <div class="stat-icon amber">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M12 2v4" />
+                  <path d="m16.2 7.8 2.9-2.9" />
+                  <path d="M18 12h4" />
+                  <path d="m16.2 16.2 2.9 2.9" />
+                  <path d="M12 18v4" />
+                  <path d="m4.9 19.1 2.9-2.9" />
+                  <path d="M2 12h4" />
+                  <path d="m4.9 4.9 2.9 2.9" />
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Next Dose In</div>
+                <div class="stat-value" id="statNextDoseCountdown">01h 24m</div>
+                <div class="stat-sub" id="statNextDoseName">Metformin 500mg (Slot 3)</div>
+              </div>
+            </div>
+
+            <div class="stat-card purple">
+              <div class="stat-icon purple">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path
+                    d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Device Hopper Stock</div>
+                <div class="stat-value" id="statHopperStock">21 / 28 Pills</div>
+                <div class="stat-sub"><span class="trend-up">Good</span> &bull; 5 Days supply</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Layout: Active Schedule Timeline & Live Hardware Status -->
+          <div class="dashboard-grid-2">
+            <!-- Daily Schedule Column -->
+            <div class="card-panel">
+              <div class="panel-header">
+                <h3>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                  Today's Medication Timeline
+                </h3>
+                <span class="badge-status upcoming" id="activeSlotTag">Slot 3 Ready</span>
+              </div>
+
+              <div class="schedule-list" id="dashboardScheduleList">
+                <!-- Dynamically Rendered Via JS -->
+              </div>
+            </div>
+
+            <!-- Recent Activity Log & Alert Center -->
+            <div class="card-panel">
+              <div class="panel-header">
+                <h3>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10 9 9 9 8 9" />
+                  </svg>
+                  Live Dispense & Sensor Activity Log
+                </h3>
+                <button class="action-btn outline" style="padding: 4px 8px; font-size: 11px;"
+                  id="btnClearLogs">Clear</button>
+              </div>
+
+              <div class="table-responsive">
+                <table class="custom-table" id="tableActivityLogs">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Event Description</th>
+                      <th>Sensor Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="logsTableBody">
+                    <!-- Logs populated via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Row: Caregiver Quick Actions & Patient Details -->
+          <div class="dashboard-grid-3">
+            <div class="card-panel">
+              <div class="panel-header">
+                <h3>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                  Emergency Caregiver Contacts
+                </h3>
+              </div>
+              <div style="font-size: 13px; color: var(--text-muted); display: flex; flex-direction: column; gap: 8px;">
+                <div
+                  style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 6px;">
+                  <strong style="color:var(--text-main);">Sarah Hughes (Daughter)</strong>
+                  <span>+1 (555) 234-8901</span>
+                </div>
+                <div
+                  style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 6px;">
+                  <strong style="color:var(--text-main);">Dr. Marcus Vance (Cardiologist)</strong>
+                  <span>+1 (555) 890-1234</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <strong style="color:var(--text-main);">St. Jude Home Care Unit</strong>
+                  <span>+1 (555) 456-7890</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-panel">
+              <div class="panel-header">
+                <h3>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="m9 12 2 2 4-4" />
+                  </svg>
+                  Safety Sensors Verification
+                </h3>
+              </div>
+              <ul style="list-style: none; font-size: 12.5px; display: flex; flex-direction: column; gap: 8px;">
+                <li style="display:flex; justify-content:space-between;">
+                  <span>IR Pill Drop Beam-Break:</span> <strong style="color:#10b981;">ARMED &bull; OK</strong>
+                </li>
+                <li style="display:flex; justify-content:space-between;">
+                  <span>Load Cell Weight Verification:</span> <strong style="color:#10b981;">CALIBRATED (0.0g)</strong>
+                </li>
+                <li style="display:flex; justify-content:space-between;">
+                  <span>Carousel Stepper Motor:</span> <strong style="color:#10b981;">HOMED (0&deg;)</strong>
+                </li>
+                <li style="display:flex; justify-content:space-between;">
+                  <span>Pill Hopper Lid Tamper Sensor:</span> <strong style="color:#10b981;">LOCKED</strong>
+                </li>
+              </ul>
+            </div>
+
+            <div class="card-panel">
+              <div class="panel-header">
+                <h3>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 8v4l3 3" />
+                    <circle cx="12" cy="12" r="10" />
+                  </svg>
+                  Next Refill Scheduled
+                </h3>
+              </div>
+              <div style="font-size: 13px;">
+                <p><strong>Refill Date:</strong> Friday, 10:00 AM</p>
+                <p style="color:var(--text-muted); margin-top:4px;">Caregiver Sarah is assigned to reload 7-day pill
+                  slots.</p>
+                <button class="action-btn outline" id="btnQuickRefill"
+                  style="margin-top: 12px; width: 100%; justify-content: center;">
+                  Simulate Hopper Refill
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================================================================= -->
+        <!-- VIEW 2: IoT HARDWARE TWIN & DISPENSER SIMULATOR -->
+        <!-- ================================================================= -->
+        <section class="view-section" id="hardwareView">
+          <div class="section-header">
+            <div>
+              <h2>IoT Smart Dispenser Digital Twin</h2>
+              <p>Simulating the physical ESP32-controlled 7-slot rotating pill dispenser, OLED screen, stepper motor,
+                and IR sensor.</p>
+            </div>
+            <div>
+              <button class="action-btn primary" id="btnHardwareTriggerCycle">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                Trigger Automatic Dispense Cycle
+              </button>
+            </div>
+          </div>
+
+          <div class="iot-sim-layout">
+            <!-- Hardware 3D Chassis Representation -->
+            <div class="device-chassis">
+              <div class="chassis-header">
+                <div class="device-badge-iot">
+                  <span class="status-dot-pulse"></span>
+                  ESP32 IoT Node &bull; Firmware v1.8.4
+                </div>
+                <div style="font-size: 11px; font-family: var(--font-mono); color: #94a3b8;" id="hwBatteryStatus">
+                  ⚡ 5.0V USB / 3.7V Li-ion (98%)
+                </div>
+              </div>
+
+              <!-- OLED Display Simulation -->
+              <div class="oled-screen-container">
+                <div class="oled-display" id="oledScreen">
+                  <div class="oled-row-top">
+                    <span id="oledTime">12:00 PM</span>
+                    <span id="oledWifi">WIFI: OK [||||]</span>
+                  </div>
+                  <div class="oled-row-center" id="oledMainMessage">
+                    SLOT 3: METFORMIN 500mg
+                  </div>
+                  <div class="oled-row-bottom">
+                    <span id="oledSubLeft">PRESS BUTTON TO TAKE</span>
+                    <span id="oledSubRight">IR: ARMED</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 7-Slot Rotating Carousel -->
+              <div class="carousel-chamber">
+                <div class="led-ring-outer" id="ledRingIndicator"></div>
+                <div class="carousel-rotor" id="carouselRotor">
+                  <div class="rotor-center-hub">
+                    <span>STEPPER</span>
+                    <span id="rotorAngleText">0&deg;</span>
+                  </div>
+                  <!-- 7 Slots arranged in a circle -->
+                  <div class="carousel-slot loaded" style="top: 8px; left: 91px;" data-slot="1">
+                    <span>S1</span>
+                    <div class="pill-dot"></div>
+                  </div>
+                  <div class="carousel-slot loaded" style="top: 42px; left: 165px;" data-slot="2">
+                    <span>S2</span>
+                    <div class="pill-dot"></div>
+                  </div>
+                  <div class="carousel-slot active" style="top: 115px; left: 175px;" data-slot="3">
+                    <span>S3</span>
+                    <div class="pill-dot"></div>
+                  </div>
+                  <div class="carousel-slot loaded" style="top: 172px; left: 135px;" data-slot="4">
+                    <span>S4</span>
+                    <div class="pill-dot"></div>
+                  </div>
+                  <div class="carousel-slot loaded" style="top: 172px; left: 45px;" data-slot="5">
+                    <span>S5</span>
+                    <div class="pill-dot"></div>
+                  </div>
+                  <div class="carousel-slot loaded" style="top: 115px; left: 6px;" data-slot="6">
+                    <span>S6</span>
+                    <div class="pill-dot"></div>
+                  </div>
+                  <div class="carousel-slot loaded" style="top: 42px; left: 16px;" data-slot="7">
+                    <span>S7</span>
+                    <div class="pill-dot"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pill Drop Chute with IR Sensor Detection -->
+              <div class="dispenser-chute-zone">
+                <div style="font-size: 11.5px; color: #94a3b8; font-family: var(--font-mono);">
+                  DISPENSING CHUTE &amp; IR BEAM BREAK SENSOR
+                </div>
+                <div class="chute-target" id="dispenserChute">
+                  <div class="ir-beam-line" id="irBeam"></div>
+                  <div class="falling-pill" id="fallingPill"></div>
+                  <span style="font-size: 11px; color: #64748b; font-family: var(--font-mono);" id="chuteLabel">Pill Cup
+                    Ready</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hardware Telemetry & Interactive Testing Controls -->
+            <div class="hardware-controls-panel">
+              <div class="card-panel">
+                <div class="panel-header">
+                  <h3>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="3" />
+                      <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                    </svg>
+                    Real-Time Sensor Telemetry
+                  </h3>
+                </div>
+
+                <div class="sensor-readouts-grid">
+                  <div class="sensor-box">
+                    <div class="sensor-box-title">IR BEAM BREAK</div>
+                    <div class="sensor-box-val" id="sensorIrVal">CLEAR (HIGH)</div>
+                  </div>
+                  <div class="sensor-box">
+                    <div class="sensor-box-title">HX711 LOAD CELL</div>
+                    <div class="sensor-box-val" id="sensorWeightVal">0.42 g</div>
+                  </div>
+                  <div class="sensor-box">
+                    <div class="sensor-box-title">MOTOR STEPPER POS</div>
+                    <div class="sensor-box-val" id="sensorMotorPos">Slot 3 / 102.8&deg;</div>
+                  </div>
+                  <div class="sensor-box">
+                    <div class="sensor-box-title">DS3231 REAL-TIME CLOCK</div>
+                    <div class="sensor-box-val" id="sensorRtcVal">SYNCED &plusmn;0ms</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Interactive Simulator Actions -->
+              <div class="card-panel">
+                <div class="panel-header">
+                  <h3>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                    Hardware Emulation Controls
+                  </h3>
+                </div>
+
+                <div class="control-btn-grid">
+                  <button class="hw-action-btn primary-hw" id="btnSimTakePill">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                    Patient Takes Pill (IR Tripped)
+                  </button>
+
+                  <button class="hw-action-btn" id="btnSimMissedTimeout">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    Simulate Missed Dose / Timeout
+                  </button>
+
+                  <button class="hw-action-btn" id="btnBuzzerTest">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 5 6 9H2v6h4l5 4V5z" />
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                    </svg>
+                    Buzzer Alarm Beep (85dB)
+                  </button>
+
+                  <button class="hw-action-btn" id="btnResetCarouselHome">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                      <path d="M3 3v5h5" />
+                    </svg>
+                    Calibrate Motor to Home (0&deg;)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================================================================= -->
+        <!-- VIEW 3: AI PILL DETECTION & VERIFICATION CAMERA SIMULATOR -->
+        <!-- ================================================================= -->
+        <section class="view-section" id="aiScannerView">
+          <div class="section-header">
+            <div>
+              <h2>AI Computer Vision Pill Detector</h2>
+              <p>Optical verification system checking pill shape, color, imprint, and dosage against prescribed regimen
+                before dispensing.</p>
+            </div>
+            <div>
+              <button class="action-btn primary" id="btnRunAiScan">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7" />
+                  <line x1="16" y1="5" x2="22" y2="5" />
+                  <line x1="19" y1="2" x2="19" y2="8" />
+                  <circle cx="9" cy="9" r="2" />
+                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                </svg>
+                Scan &amp; Verify Pill
+              </button>
+            </div>
+          </div>
+
+          <div class="ai-scanner-layout">
+            <!-- Simulated Camera Feed Viewfinder -->
+            <div class="camera-feed-card">
+              <canvas class="camera-feed-canvas" id="cameraFeedCanvas" width="640" height="400"></canvas>
+              <div class="scanner-overlay">
+                <div
+                  style="display:flex; justify-content:space-between; color:#38bdf8; font-family:var(--font-mono); font-size:11px;">
+                  <span>CAM: OV2640 1080P</span>
+                  <span id="scannerFps">30 FPS &bull; EXPOSURE AUTO</span>
+                </div>
+                <div class="scanner-reticle">
+                  <div class="scanner-laser"></div>
+                </div>
+                <div class="pill-bounding-box" id="pillBoundingBox">
+                  <span class="pill-bounding-tag" id="pillBoundingTag">Metformin 500mg (98.4%)</span>
+                </div>
+                <div style="color:#94a3b8; font-size:11px; font-family:var(--font-mono); text-align:center;">
+                  PLACE PILL IN CENTER RETICLE FOR VERIFICATION
+                </div>
+              </div>
+            </div>
+
+            <!-- AI Classification Results -->
+            <div class="ai-results-card">
+              <div class="card-panel">
+                <div class="panel-header">
+                  <h3>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                    Prescription Matching Analysis
+                  </h3>
+                  <span class="badge-status taken" id="aiVerificationBadge">VERIFIED &bull; SAFE</span>
+                </div>
+
+                <div class="pill-match-card">
+                  <div class="pill-match-header">
+                    <div>
+                      <h4 style="font-size: 15px; font-weight: 700;" id="aiIdentifiedName">Metformin Hydrochloride</h4>
+                      <p style="font-size: 12px; color: var(--text-muted);" id="aiIdentifiedDose">500mg Extended Release
+                        Tablet</p>
+                    </div>
+                    <span class="pill-type-tag" id="aiPrescriptionMatchTag">Prescribed Match</span>
+                  </div>
+
+                  <div style="font-size: 12.5px; display:flex; flex-direction:column; gap:4px; margin-top:6px;">
+                    <div style="display:flex; justify-content:space-between;">
+                      <span style="color:var(--text-muted);">Detected Shape:</span>
+                      <strong id="aiDetectShape">Oblong / Capsule-Shaped</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                      <span style="color:var(--text-muted);">Color Signature:</span>
+                      <strong id="aiDetectColor">White / Film-Coated</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                      <span style="color:var(--text-muted);">Imprint OCR:</span>
+                      <strong id="aiDetectImprint">"M 500" (Exact Match)</strong>
+                    </div>
+                  </div>
+
+                  <div style="margin-top: 8px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 4px;">
+                      <span>AI Model Confidence:</span>
+                      <strong id="aiConfidenceVal">98.4%</strong>
+                    </div>
+                    <div class="confidence-bar-wrapper">
+                      <div class="confidence-bar" id="aiConfidenceBar"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Test Different Sample Pills -->
+                <div style="margin-top: 16px;">
+                  <label
+                    style="font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 6px; display: block;">
+                    Simulate Camera Sample Image:
+                  </label>
+                  <select class="form-select" id="samplePillSelect">
+                    <option value="metformin">Metformin 500mg (White Oblong - Scheduled Now)</option>
+                    <option value="lisinopril">Lisinopril 10mg (Pink Round Tablet)</option>
+                    <option value="aspirin">Aspirin 81mg (Yellow Round Tablet)</option>
+                    <option value="atorvastatin">Atorvastatin 20mg (Oval White Tablet)</option>
+                    <option value="wrong_pill">Unknown Red Capsule (Mismatch Warning Test)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================================================================= -->
+        <!-- VIEW 4: ELDERLY PATIENT KIOSK MODE -->
+        <!-- ================================================================= -->
+        <section class="view-section" id="kioskView">
+          <div class="kiosk-container">
+            <div class="kiosk-greeting">
+              <h2>Good Afternoon, Eleanor! 🌸</h2>
+              <p id="kioskSubGreeting">Here is your scheduled medication for today.</p>
+            </div>
+
+            <div class="kiosk-dose-banner" id="kioskActiveBanner">
+              <div class="kiosk-dose-icon">💊</div>
+              <div class="kiosk-dose-text">
+                <h3 id="kioskCurrentMed">Metformin 500mg (Slot 3)</h3>
+                <p id="kioskCurrentInstructions">Take 1 tablet with a full glass of water after your meal.</p>
+              </div>
+            </div>
+
+            <div class="kiosk-btn-grid">
+              <button class="kiosk-main-btn kiosk-btn-taken" id="btnKioskTakePill">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                I Took My Medicine
+              </button>
+
+              <button class="kiosk-main-btn kiosk-btn-voice" id="btnKioskSpeakPrompt">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                </svg>
+                Hear Reminder Again
+              </button>
+
+              <button class="kiosk-main-btn kiosk-btn-sos" id="btnKioskEmergency">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                Need Help? Call Caregiver Sarah (SOS)
+              </button>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================================================================= -->
+        <!-- VIEW 5: ADHERENCE ANALYTICS & HISTORY -->
+        <!-- ================================================================= -->
+        <section class="view-section" id="analyticsView">
+          <div class="section-header">
+            <div>
+              <h2>Patient Medication Adherence Analytics</h2>
+              <p>Longitudinal compliance tracking, missed dose trends, and exportable physician reports.</p>
+            </div>
+            <div>
+              <button class="action-btn outline" id="btnExportReport">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Export Doctor Report (CSV)
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-grid-2">
+            <!-- Weekly Compliance Breakdown Chart Canvas -->
+            <div class="card-panel">
+              <div class="panel-header">
+                <h3>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20V10" />
+                    <path d="M18 20V4" />
+                    <path d="M6 20v-4" />
+                  </svg>
+                  Weekly Adherence Performance (% On-Time)
+                </h3>
+              </div>
+              <canvas id="complianceChart" width="500" height="240" style="max-height:240px;"></canvas>
+            </div>
+
+            <!-- Adherence Summary Factors -->
+            <div class="card-panel">
+              <div class="panel-header">
+                <h3>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 6v6l4 2" />
+                  </svg>
+                  Clinical Adherence Factors
+                </h3>
+              </div>
+              <div style="font-size: 13.5px; display: flex; flex-direction: column; gap: 14px;">
+                <div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span>Morning Doses (8:00 AM)</span>
+                    <strong>98% On-Time</strong>
+                  </div>
+                  <div class="confidence-bar-wrapper">
+                    <div style="background:#10b981; height:100%; width:98%;"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span>Afternoon Doses (1:00 PM)</span>
+                    <strong>91% On-Time</strong>
+                  </div>
+                  <div class="confidence-bar-wrapper">
+                    <div style="background:#3b82f6; height:100%; width:91%;"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span>Evening Doses (7:00 PM)</span>
+                    <strong>94% On-Time</strong>
+                  </div>
+                  <div class="confidence-bar-wrapper">
+                    <div style="background:#8b5cf6; height:100%; width:94%;"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span>Night Doses (9:30 PM)</span>
+                    <strong>88% On-Time</strong>
+                  </div>
+                  <div class="confidence-bar-wrapper">
+                    <div style="background:#f59e0b; height:100%; width:88%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Historical Dose Log Table -->
+          <div class="card-panel" style="margin-top: 20px;">
+            <div class="panel-header">
+              <h3>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M8 2v4" />
+                  <path d="M16 2v4" />
+                  <rect width="18" height="18" x="3" y="4" rx="2" />
+                  <path d="M3 10h18" />
+                </svg>
+                Historical Medication Administration Records (MAR)
+              </h3>
+            </div>
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Medication &amp; Dose</th>
+                    <th>Slot</th>
+                    <th>Sensor Confirmation</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="marHistoryTableBody">
+                  <!-- JS dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================================================================= -->
+        <!-- VIEW 6: MEDICATION & PILL INVENTORY MANAGER -->
+        <!-- ================================================================= -->
+        <section class="view-section" id="inventoryView">
+          <div class="section-header">
+            <div>
+              <h2>Medication Inventory &amp; Refill Manager</h2>
+              <p>Keep track of pill bottle reserves, prescription refills, and hopper cartridge capacity.</p>
+            </div>
+            <div>
+              <button class="action-btn primary" id="btnAddNewInventory">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14" />
+                  <path d="M5 12h14" />
+                </svg>
+                Add Medication Stock
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-grid-3" id="inventoryCardsGrid">
+            <!-- Dynamic Inventory Cards -->
+          </div>
+        </section>
+
+
+        <!-- ================================================================= -->
+        <!-- VIEW 7: PROJECT OVERVIEW & IoT ARCHITECTURE GUIDE -->
+        <!-- ================================================================= -->
+        <section class="view-section" id="docsView">
+          <div class="section-header">
+            <div>
+              <h2>Project Overview &amp; Technical Architecture</h2>
+              <p>Comprehensive design documentation for the Smart Pill Dispenser for Elderly Care.</p>
+            </div>
+          </div>
+
+          <div class="doc-card">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+              1. Project Overview
+            </h3>
+            <p>
+              The <strong>Smart Pill Dispenser for Elderly Care</strong> is an IoT-based solution designed to assist
+              elderly individuals in managing their medication schedules. With aging, many elderly people experience
+              difficulty remembering to take their medication on time, which can lead to serious health complications.
+              This system aims to provide a reliable, automated way to ensure that individuals adhere to their
+              prescribed medication regimens, thus improving their overall health and wellbeing. The Smart Pill
+              Dispenser uses advanced technologies such as automation, sensors, and mobile connectivity to deliver
+              medications at the right time and in the right doses. It also provides reminders and alerts for
+              caregivers, ensuring proper medication management for elderly individuals.
+            </p>
+          </div>
+
+          <div class="doc-card">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              2. Problem Statement
+            </h3>
+            <p>
+              As the population ages, many elderly individuals suffer from chronic conditions that require regular
+              medication. Unfortunately, forgetfulness or difficulty managing complex medication schedules often leads
+              to missed doses or incorrect medication administration. This can result in worsened health conditions,
+              hospitalizations, or even fatalities. Traditional pill dispensers and medication management systems are
+              either manual or require constant supervision, which is not always feasible for caregivers. Therefore,
+              there is a significant need for an automated and user-friendly system to ensure that the elderly take
+              their medications correctly, independently, and on time.
+            </p>
+          </div>
+
+          <div class="doc-card">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect width="18" height="18" x="3" y="3" rx="2" />
+                <path d="M3 9h18" />
+                <path d="M9 21V9" />
+              </svg>
+              3. IoT Hardware Components &amp; System Architecture
+            </h3>
+            <p>
+              The physical prototype integrates high-precision embedded microcontrollers, motor actuators, optical
+              sensors, and audio-visual feedback loops:
+            </p>
+            <div class="component-spec-grid">
+              <div class="component-box">
+                <h4>ESP32 Microcontroller</h4>
+                <p>Dual-core 240MHz MCU with integrated 2.4GHz Wi-Fi &amp; BLE for real-time telemetry, MQTT
+                  transmission, and OTA updates.</p>
+              </div>
+              <div class="component-box">
+                <h4>28BYJ-48 Stepper &amp; ULN2003</h4>
+                <p>Geared 5V stepper motor executing exact rotational steps to index the 7-compartment pill rotor
+                  carousel accurately.</p>
+              </div>
+              <div class="component-box">
+                <h4>IR Beam-Break Sensor</h4>
+                <p>Infrared transmitter &amp; receiver pair mounted inside the dispensing chute to detect physical pill
+                  gravity drop events.</p>
+              </div>
+              <div class="component-box">
+                <h4>HX711 &amp; Load Cell (500g)</h4>
+                <p>Precision strain-gauge amplifier verifying weight change in the collection cup before and after
+                  medication ingestion.</p>
+              </div>
+              <div class="component-box">
+                <h4>DS3231 Precision I2C RTC</h4>
+                <p>Battery-backed Real Time Clock ensuring accurate scheduled alarms even during power/Wi-Fi outages.
+                </p>
+              </div>
+              <div class="component-box">
+                <h4>0.96" SSD1306 OLED Display</h4>
+                <p>I2C monochrome screen displaying current time, medication name, dosage instructions, and device
+                  status.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: USER AUTHENTICATION — LOGIN / PROFILE PANEL                   -->
+  <!-- ===================================================================== -->
+  <div class="modal-overlay" id="modalAuth">
+    <div class="modal-window" style="max-width: 480px;">
+
+      <!-- ── PANEL A: SIGN IN / REGISTER ── -->
+      <div id="authPanelSignIn">
+        <div class="modal-header">
+          <h3 id="authModalTitle">🔐 Caregiver &amp; Doctor Sign In</h3>
+          <button class="action-btn outline" style="padding:4px 8px;" id="btnCloseAuthModal">&times;</button>
+        </div>
+
+        <!-- Quick Demo Logins -->
+        <div
+          style="background:linear-gradient(135deg,#f0f9ff,#f8fafc); padding:12px 24px; border-bottom:1px solid #e2e8f0;">
+          <div
+            style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">
+            ⚡ Quick 1-Click Demo Login</div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="action-btn outline btn-demo-auth" id="btnDemoCaregiver"
+              style="flex:1; font-size:12px; padding:6px 8px; justify-content:center;">👩‍⚕️ Sarah (Caregiver)</button>
+            <button type="button" class="action-btn outline btn-demo-auth" id="btnDemoDoctor"
+              style="flex:1; font-size:12px; padding:6px 8px; justify-content:center;">👨‍⚕️ Dr. Vance (Doctor)</button>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div style="display:flex; border-bottom:1px solid var(--border-subtle);">
+          <button type="button" class="auth-tab-btn active" id="tabBtnLogin"
+            style="flex:1; padding:12px; font-weight:700; font-size:13.5px; border-bottom:2px solid var(--primary); color:var(--primary);">Sign
+            In</button>
+          <button type="button" class="auth-tab-btn" id="tabBtnRegister"
+            style="flex:1; padding:12px; font-weight:600; font-size:13.5px; color:var(--text-muted);">Register</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="formLogin">
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="inputLoginEmail">Email Address</label>
+              <input type="email" class="form-input" id="inputLoginEmail" placeholder="e.g. sarah@hughes.care" required>
+            </div>
+            <div class="form-group">
+              <label for="inputLoginPassword">Password</label>
+              <div style="position:relative;">
+                <input type="password" class="form-input" id="inputLoginPassword" placeholder="••••••••" required
+                  style="padding-right:40px;">
+                <button type="button" id="btnTogglePassword"
+                  onclick="const i=document.getElementById('inputLoginPassword'); i.type=i.type==='password'?'text':'password'; this.textContent=i.type==='password'?'👁️':'🙈'"
+                  style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:14px;">👁️</button>
+              </div>
+            </div>
+            <div id="loginErrorMsg"
+              style="color:#dc2626; font-size:12.5px; display:none; padding:8px 12px; background:#fef2f2; border-radius:8px; margin-top:-4px;">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="action-btn outline" id="btnCancelLogin">Cancel</button>
+            <button type="submit" class="action-btn primary" id="btnSubmitLogin">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+              </svg>
+              Sign In
+            </button>
+          </div>
+        </form>
+
+        <!-- Register Form -->
+        <form id="formRegister" style="display:none;">
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="inputRegName">Full Name</label>
+              <input type="text" class="form-input" id="inputRegName" placeholder="e.g. Sarah Hughes" required>
+            </div>
+            <div class="form-group">
+              <label for="inputRegEmail">Email Address</label>
+              <input type="email" class="form-input" id="inputRegEmail" placeholder="e.g. sarah@example.com" required>
+            </div>
+            <div class="form-group">
+              <label for="inputRegPassword">Password (8+ chars, upper/lowercase, number &amp; symbol)</label>
+              <input type="password" class="form-input" id="inputRegPassword" placeholder="••••••••" minlength="8"
+                required pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}">
+            </div>
+            <div class="form-group">
+              <label for="selectRegRole">User Role</label>
+              <select class="form-select" id="selectRegRole">
+                <option value="caregiver" selected>Primary Caregiver / Family Member</option>
+                <option value="doctor">Attending Physician / Doctor</option>
+                <option value="senior">Senior Patient</option>
+              </select>
+            </div>
+            <div id="registerErrorMsg"
+              style="color:#dc2626; font-size:12.5px; display:none; padding:8px 12px; background:#fef2f2; border-radius:8px;">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="action-btn outline" id="btnCancelRegister">Cancel</button>
+            <button type="submit" class="action-btn primary">Create Account</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ── PANEL C: LOGGED-IN PROFILE ── -->
+      <div id="authPanelProfile" style="display:none;">
+        <div class="modal-header">
+          <h3>👤 My Account</h3>
+          <button class="action-btn outline" style="padding:4px 8px;" id="btnCloseProfilePanel">&times;</button>
+        </div>
+        <div class="modal-body" style="text-align:center;">
+          <div id="profileAvatar"
+            style="width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,#2563eb,#06b6d4); color:#fff; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:800; margin:0 auto 16px;">
+            SH</div>
+          <h4 id="profileName" style="font-size:20px; font-weight:800; color:#0f172a; margin-bottom:4px;">Sarah Hughes
+          </h4>
+          <p id="profileEmail" style="font-size:13px; color:#64748b; margin-bottom:2px;">sarah@hughes.care</p>
+          <span id="profileRoleBadge"
+            style="display:inline-block; padding:3px 12px; border-radius:99px; background:#dbeafe; color:#1d4ed8; font-size:11.5px; font-weight:700; text-transform:uppercase; margin-bottom:20px;">Caregiver</span>
+
+          <div
+            style="background:#f8fafc; border-radius:12px; padding:16px; text-align:left; font-size:13px; display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:#64748b;">Patient:</span>
+              <strong id="profilePatient">Eleanor Hughes</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:#64748b;">Phone:</span>
+              <strong id="profilePhone">+1 (555) 234-8901</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="color:#64748b;">Email Verified:</span>
+              <span id="profileVerified" style="color:#10b981; font-weight:700;">✅ Verified</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:#64748b;">Session:</span>
+              <span style="color:#10b981; font-weight:700;">Secure HTTP-only cookie</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="justify-content:center; gap:12px;">
+          <button type="button" class="action-btn outline" id="btnSwitchAccount">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 1l4 4-4 4" />
+              <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+              <path d="M7 23l-4-4 4-4" />
+              <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+            </svg>
+            Switch Account
+          </button>
+          <button type="button" class="action-btn" id="btnLogoutModal"
+            style="background:#fef2f2; color:#dc2626; border:1px solid #fca5a5;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: ADD PRESCRIPTION -->
+  <!-- ===================================================================== -->
+  <div class="modal-overlay" id="modalAddPrescription">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3>Add New Prescription Schedule</h3>
+        <button class="action-btn outline" style="padding:4px 8px;" id="btnClosePrescriptionModal">&times;</button>
+      </div>
+      <form id="formAddPrescription">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="inputMedName">Medication Name</label>
+            <input type="text" class="form-input" id="inputMedName" placeholder="e.g. Lisinopril" required>
+          </div>
+          <div class="form-group">
+            <label for="inputDosage">Dosage &amp; Form</label>
+            <input type="text" class="form-input" id="inputDosage" placeholder="e.g. 10mg tablet" required>
+          </div>
+          <div class="form-group">
+            <label for="inputScheduledTime">Scheduled Time</label>
+            <input type="time" class="form-input" id="inputScheduledTime" value="08:00" required>
+          </div>
+          <div class="form-group">
+            <label for="selectSlotNumber">Dispenser Carousel Slot</label>
+            <select class="form-select" id="selectSlotNumber">
+              <option value="1">Slot 1 (Morning)</option>
+              <option value="2">Slot 2 (Noon)</option>
+              <option value="3" selected>Slot 3 (Evening)</option>
+              <option value="4">Slot 4 (Night)</option>
+              <option value="5">Slot 5 (Extra)</option>
+              <option value="6">Slot 6 (Extra)</option>
+              <option value="7">Slot 7 (Extra)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="inputInstructions">Patient Instructions</label>
+            <input type="text" class="form-input" id="inputInstructions"
+              placeholder="e.g. Take with food and full glass of water">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="action-btn outline" id="btnCancelPrescription">Cancel</button>
+          <button type="submit" class="action-btn primary">Save Prescription</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: SOS EMERGENCY ALERT DISPATCHED -->
+  <!-- ===================================================================== -->
+  <div class="modal-overlay" id="modalSosAlert">
+    <div class="modal-window" style="border-top: 6px solid #ef4444;">
+      <div class="modal-header">
+        <h3 style="color:#ef4444; display:flex; align-items:center; gap:8px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          EMERGENCY SOS ALERT TRIGGERED
+        </h3>
+        <button class="action-btn outline" style="padding:4px 8px;" id="btnCloseSosModal">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <div style="font-size: 52px; margin: 10px 0;">🚨</div>
+        <h4 style="font-size: 18px; color: #0f172a; margin-bottom: 8px;">Caregiver Notification Dispatched</h4>
+        <p style="color: #64748b; font-size: 14px;">
+          An urgent SMS and high-priority push notification have been transmitted to <strong>Sarah Hughes
+            (+1-555-234-8901)</strong> and <strong>St. Jude Emergency Response</strong>.
+        </p>
+        <div
+          style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px; margin-top: 16px; font-size: 13px; color: #991b1b;">
+          Dispenser GPS Location: 742 Evergreen Terrace &bull; Battery 98% &bull; Buzzer Active
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content:center;">
+        <button class="action-btn danger" id="btnDismissSos">Dismiss &amp; Reset Alarm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Core JavaScript Application Logic -->
+  <script src="app.js"></script>
+</body>
+
+</html>
